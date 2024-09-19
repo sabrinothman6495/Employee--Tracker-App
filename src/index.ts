@@ -14,7 +14,7 @@ const client = new Client({
 
 client.connect()
     .then(() => console.log('Connected to the database'))
-    .catch((err: any) => console.error('Connection error', err.stack));
+    .catch((err) => console.error('Connection error', err.stack));
 
 function startApp() {
     inquirer.prompt([
@@ -30,7 +30,7 @@ function startApp() {
                 'Exit'
             ]
         }
-    ]).then((answers: { action: string }) => {
+    ]).then((answers) => {
         switch (answers.action) {
             case 'View all employees':
                 viewEmployees();
@@ -52,15 +52,38 @@ function startApp() {
     });
 }
 
-// Placeholder functions for the actions
 function viewEmployees() {
-    console.log('Viewing all employees...');
-    startApp();
+    const query = 'SELECT * FROM employee'; // Ensure the table name is correct
+    client.query(query)
+        .then((res) => {
+            console.log(res.rows);
+            startApp();
+        })
+        .catch((err) => {
+            console.error('Error fetching employees:', err);
+            startApp();
+        });
 }
 
 function addEmployee() {
-    console.log('Adding an employee...');
-    startApp();
+    inquirer.prompt([
+        { type: 'input', name: 'first_name', message: 'Enter first name:' },
+        { type: 'input', name: 'last_name', message: 'Enter last name:' },
+        { type: 'input', name: 'role_id', message: 'Enter role ID:' },
+        { type: 'input', name: 'manager_id', message: 'Enter manager ID (leave blank if none):' }
+    ]).then((answers) => {
+        const query = 'INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES ($1, $2, $3, $4)';
+        const values = [answers.first_name, answers.last_name, answers.role_id, answers.manager_id || null];
+        client.query(query, values)
+            .then(() => {
+                console.log('Employee added');
+                startApp();
+            })
+            .catch((err) => {
+                console.error('Error adding employee:', err);
+                startApp();
+            });
+    });
 }
 
 function addRole() {
@@ -69,8 +92,21 @@ function addRole() {
 }
 
 function addDepartment() {
-    console.log('Adding a department...');
-    startApp();
+    inquirer.prompt([
+        { type: 'input', name: 'name', message: 'Enter department name:' }
+    ]).then((answers) => {
+        const query = 'INSERT INTO department (name) VALUES ($1)';
+        const values = [answers.name];
+        client.query(query, values)
+            .then(() => {
+                console.log('Department added');
+                startApp();
+            })
+            .catch((err) => {
+                console.error('Error adding department:', err);
+                startApp();
+            });
+    });
 }
 
 // Start the application
