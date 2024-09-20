@@ -27,6 +27,7 @@ function startApp() {
                 'Add an employee',
                 'Add a role',
                 'Add a department',
+                `update an employee's role`,
                 'Exit'
             ]
         }
@@ -36,13 +37,16 @@ function startApp() {
                 viewEmployees();
                 break;
             case 'Add an employee':
-                addEmployee();
+                  startApp();
                 break;
             case 'Add a role':
                 addRole();
                 break;
             case 'Add a department':
                 addDepartment();
+                break;
+            case `update an employee's role`:
+                updateEmployeeRole();
                 break;
             case 'Exit':
                 client.end();
@@ -52,51 +56,76 @@ function startApp() {
     });
 }
 
-function viewEmployees() {
-    const query = 'SELECT * FROM employee'; // Ensure the table name is correct
-    client.query(query)
-        .then((res) => {
-            console.log(res.rows);
-            startApp();
-        })
-        .catch((err) => {
-            console.error('Error fetching employees:', err);
-            startApp();
-        });
+async function viewEmployees() {
+    const query = 'SELECT * FROM employee';
+    try {
+        const res = await client.query(query);
+        console.table(res.rows); // Use console.table for better formatting
+    } catch (err) {
+        console.error('Error fetching employees:', err);
+    } finally {
+        startApp();
+    }
 }
 
-function addEmployee() {
+async function addEmployee() {
+    const answers = await inquirer.prompt([
+      { name: 'first_name', message: 'Enter first name:' },
+      { name: 'last_name', message: 'Enter last name:' },
+      { name: 'role_id', message: 'Enter role ID:' },
+      { name: 'manager_id', message: 'Enter manager ID (leave blank if none):' },
+    ]);
+  
+    const roleId = parseInt(answers.role_id);
+    const managerId = answers.manager_id ? parseInt(answers.manager_id) : null;
+  
+    if (isNaN(roleId) || (answers.manager_id !== '' && isNaN(managerId!))) {
+      console.log('Role ID and Manager ID must be valid integers.');
+      return addEmployee(); // Prompt the user again
+    }
+  
+    try {
+      await client.query(
+        'INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES ($1, $2, $3, $4)',
+        [answers.first_name, answers.last_name, roleId, managerId]
+      );
+      console.log('Employee added successfully');
+    } catch (err) {
+      console.error('Error adding employee:', err);
+    }
+  }
+  
+  addEmployee();
+
+
+function addRole() {
     inquirer.prompt([
-        { type: 'input', name: 'first_name', message: 'Enter first name:' },
-        { type: 'input', name: 'last_name', message: 'Enter last name:' },
-        { type: 'input', name: 'role_id', message: 'Enter role ID:' },
-        { type: 'input', name: 'manager_id', message: 'Enter manager ID (leave blank if none):' }
+        { type: 'input', name: 'title', message: 'Enter role title:' },
+        { type: 'input', name: 'salary', message: 'Enter role salary:' },
+        { type: 'input', name: 'department_id', message: 'Enter department ID:' }
     ]).then((answers) => {
-        const query = 'INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES ($1, $2, $3, $4)';
-        const values = [answers.first_name, answers.last_name, answers.role_id, answers.manager_id || null];
+        const query = 'INSERT INTO role (title, salary, department_id) VALUES ($1, $2, $3)';
+        const values = [answers.title, parseFloat(answers.salary), parseInt(answers.department_id)];
+        
         client.query(query, values)
             .then(() => {
-                console.log('Employee added');
+                console.log('Role added');
                 startApp();
             })
             .catch((err) => {
-                console.error('Error adding employee:', err);
+                console.error('Error adding role:', err);
                 startApp();
             });
     });
 }
 
-function addRole() {
-    console.log('Adding a role...');
-    startApp();
-}
-
 function addDepartment() {
     inquirer.prompt([
-        { type: 'input', name: 'name', message: 'Enter department name:' }
+        { type: 'list', name: 'name', message: 'Enter department name:', choices: ['Engineering', 'Finance', 'Legal', 'Sales'] }
     ]).then((answers) => {
         const query = 'INSERT INTO department (name) VALUES ($1)';
         const values = [answers.name];
+        
         client.query(query, values)
             .then(() => {
                 console.log('Department added');
@@ -108,6 +137,34 @@ function addDepartment() {
             });
     });
 }
+
+async function updateEmployeeRole() {
+    const answers = await inquirer.prompt([
+      { name: 'employee_id', message: 'Enter employee ID:' },
+      { name: 'role_id', message: 'Enter new role ID:' },
+    ]);
+  
+    const employeeId = parseInt(answers.employee_id);
+    const roleId = parseInt(answers.role_id);
+  
+    if (isNaN(employeeId) || isNaN(roleId)) {
+      console.log('Employee ID and Role ID must be valid integers.');
+      return updateEmployeeRole(); // Prompt the user again
+    }
+  
+    try {
+      await client.query(
+        'UPDATE employee SET role_id = $1 WHERE id = $2',
+        [roleId, employeeId]
+      );
+      console.log('Employee role updated successfully');
+    } catch (err) {
+      console.error('Error updating employee role:', err);
+    }
+  }
+  
+  updateEmployeeRole();
+
 
 // Start the application
 startApp();
