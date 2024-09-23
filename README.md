@@ -12,11 +12,11 @@ an employee tracker app that tracks employee departments, roles, salarys, adds n
 
 ## Installation
 Navigate to the project directory:
-cd Employee--Tracker-App
-to navigate to pg admin 
-\c employee_tracker_db
-\i seeds.sql 
-\i schema.sql
+* cd Employee--Tracker-App
+* to navigate to pg admin 
+* \c employee_tracker_db
+* \i seeds.sql 
+* \i schema.sql
 
 to show database charts in terminal:
 npm start
