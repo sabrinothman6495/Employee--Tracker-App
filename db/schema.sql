@@ -1,47 +1,23 @@
--- Drop tables if they exist to avoid errors
-DROP TABLE IF EXISTS employee;
-DROP TABLE IF EXISTS role;
-DROP TABLE IF EXISTS department;
+drop table if exists employee;
+drop table if exists role;
+drop table if exists department;
 
-\c employee_tracker_db
-
--- Create department table
-CREATE TABLE department (
+CREATE TABLE IF NOT EXISTS department (
     id SERIAL PRIMARY KEY,
-    name VARCHAR(50) UNIQUE NOT NULL
+    name VARCHAR(30) UNIQUE NOT NULL
 );
 
--- Create role table
-CREATE TABLE role (
+CREATE TABLE IF NOT EXISTS role (
     id SERIAL PRIMARY KEY,
-    title VARCHAR(50) UNIQUE NOT NULL,
-    salary DECIMAL(10, 2) NOT NULL,
-    department_id INT NOT NULL,
-    FOREIGN KEY (department_id) REFERENCES department (id)
+    title VARCHAR(30) UNIQUE NOT NULL,
+    salary DECIMAL NOT NULL,
+    department_id INTEGER NOT NULL REFERENCES department(id)
 );
 
--- Create employee table
-CREATE TABLE employee (
+CREATE TABLE IF NOT EXISTS employee (
     id SERIAL PRIMARY KEY,
-    first_name VARCHAR(50) NOT NULL,
-    last_name VARCHAR(50) NOT NULL,
-    role_id INT REFERENCES role(id) ON DELETE SET NULL,
-    manager_id INT REFERENCES employee(id) ON DELETE SET NULL
+    first_name VARCHAR(30) NOT NULL,
+    last_name VARCHAR(30) NOT NULL,
+    role_id INTEGER NOT NULL REFERENCES role(id),
+    manager_id INTEGER REFERENCES employee(id)
 );
-
--- Sample query to retrieve combined data
-SELECT 
-    department.id AS department_id,
-    department.name AS department_name,
-    role.id AS role_id,
-    role.title AS role_title,
-    role.salary AS role_salary,
-    employee.id AS employee_id,
-    employee.first_name AS employee_first_name,
-    employee.last_name AS employee_last_name,
-    employee.manager_id AS employee_manager_id
-FROM
-    department
-LEFT JOIN role ON department.id = role.department_id
-LEFT JOIN employee ON role.id = employee.role_id;
-
