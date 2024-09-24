@@ -27,3 +27,8 @@ INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES
 ('John', 'Doe', 1, NULL),
 ('Jane', 'Smith', 2, 1),
 ('Bill', 'Johnson', 3, 1);
+('Sarah', 'Connor', 4, 1),
+('Mike', 'Wazowski', 5, 1),
+('Sally', 'Jones', 6, 1),
+('Bob', 'Smith', 7, 1)
+ON CONFLICT (first_name, last_name) DO NOTHING;
